@@ -53,6 +53,9 @@ async function buildAll() {
     packages: "external",
     format: "esm",
     outfile: "dist/index.js",
+    banner: {
+      js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url); const __filename = new URL(import.meta.url).pathname; const __dirname = new URL('.', import.meta.url).pathname;",
+    },
     define: {
       "process.env.NODE_ENV": '"production"',
     },
