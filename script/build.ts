@@ -1,9 +1,9 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "fs/promises";
-import path from "path";
-import { existsSync } from "fs";
 
+// server deps to bundle to reduce openat(2) syscalls
+// which helps cold start times
 const allowlist = [
   "@google/generative-ai",
   "axios",
@@ -33,8 +33,6 @@ const allowlist = [
 ];
 
 async function buildAll() {
-  console.log("Current working directory:", process.cwd());
-
   await rm("dist", { recursive: true, force: true });
 
   console.log("building client...");
@@ -61,13 +59,6 @@ async function buildAll() {
     external: externals,
     logLevel: "info",
   });
-  
-  console.log("Build finished. Checking dist folder...");
-  if (existsSync("dist/index.cjs")) {
-    console.log("Success: dist/index.cjs created.");
-  } else {
-    console.log("Error: dist/index.cjs NOT found.");
-  }
 }
 
 buildAll().catch((err) => {

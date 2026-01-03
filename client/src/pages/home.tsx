@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
-import { Send, Mail, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Send, Mail, Clock, AlertCircle, CheckCircle2, Code } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useSendEmail, useEmailHistory } from "@/hooks/use-email";
@@ -15,6 +15,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,10 +23,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
 export default function Home() {
   const { data: history, isLoading: isLoadingHistory } = useEmailHistory();
   const { mutate: sendEmail, isPending } = useSendEmail();
+  const [isHtmlMode, setIsHtmlMode] = useState(false);
 
   const form = useForm<SendEmailInput>({
     resolver: zodResolver(sendEmailSchema),
@@ -54,10 +57,10 @@ export default function Home() {
             <Mail className="w-8 h-8" />
           </div>
           <h1 className="text-4xl font-extrabold text-foreground tracking-tight sm:text-5xl">
-            SMTP Mailer
+            Email Service
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Send transactional emails reliably. View your delivery history in real-time.
+            Compose and send emails with ease. Supports plain text and HTML designs.
           </p>
         </div>
 
@@ -65,16 +68,27 @@ export default function Home() {
           
           {/* Left Column: Send Form */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4 }}
           >
             <Card className="border-border/50 shadow-xl shadow-primary/5">
-              <CardHeader>
-                <CardTitle>Compose Email</CardTitle>
-                <CardDescription>
-                  Enter the recipient details and message content below.
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
+                <div className="space-y-1">
+                  <CardTitle>Compose Email</CardTitle>
+                  <CardDescription>
+                    Send designed messages to your users.
+                  </CardDescription>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsHtmlMode(!isHtmlMode)}
+                  className={`gap-2 ${isHtmlMode ? 'bg-primary/10 border-primary/50' : ''}`}
+                >
+                  <Code className="w-4 h-4" />
+                  {isHtmlMode ? 'HTML Mode' : 'Text Mode'}
+                </Button>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
@@ -84,9 +98,9 @@ export default function Home() {
                       name="to"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Recipient (To)</FormLabel>
+                          <FormLabel>Recipient Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="user@example.com" {...field} className="bg-muted/30" />
+                            <Input placeholder="recipient@example.com" {...field} className="bg-muted/30" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -100,7 +114,7 @@ export default function Home() {
                         <FormItem>
                           <FormLabel>Subject</FormLabel>
                           <FormControl>
-                            <Input placeholder="Welcome to our platform" {...field} className="bg-muted/30" />
+                            <Input placeholder="Type subject here..." {...field} className="bg-muted/30" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -112,14 +126,26 @@ export default function Home() {
                       name="body"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Message Body</FormLabel>
+                          <FormLabel>Message Content</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Type your message here..." 
-                              className="min-h-[150px] bg-muted/30 resize-none" 
-                              {...field} 
-                            />
+                            <div className="relative">
+                              <Textarea 
+                                placeholder={isHtmlMode ? "Enter HTML code here..." : "Type your message here..."}
+                                className={`min-h-[200px] bg-muted/30 resize-none font-mono ${isHtmlMode ? 'text-primary' : ''}`}
+                                {...field} 
+                              />
+                              {isHtmlMode && (
+                                <div className="absolute top-2 right-2">
+                                  <Badge variant="secondary" className="bg-primary/20 text-[10px] uppercase">
+                                    HTML
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
                           </FormControl>
+                          <FormDescription>
+                            {isHtmlMode ? 'Use HTML tags for a professional design.' : 'Plain text messages will be sent as simple paragraphs.'}
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -128,7 +154,7 @@ export default function Home() {
                     <Button 
                       type="submit" 
                       disabled={isPending}
-                      className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                      className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
                     >
                       {isPending ? (
                         <>
@@ -138,7 +164,7 @@ export default function Home() {
                       ) : (
                         <>
                           <Send className="w-5 h-5 mr-2" />
-                          Send Email
+                          Send Message
                         </>
                       )}
                     </Button>
@@ -150,22 +176,22 @@ export default function Home() {
 
           {/* Right Column: History */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             className="h-full"
           >
-            <Card className="h-full border-border/50 shadow-xl shadow-black/5 flex flex-col">
+            <Card className="h-full border-border/50 shadow-xl shadow-black/5 flex flex-col min-h-[600px]">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <CardTitle>Recent Activity</CardTitle>
+                    <CardTitle>Delivery History</CardTitle>
                     <CardDescription>
-                      Real-time log of email delivery attempts.
+                      Monitor your message status.
                     </CardDescription>
                   </div>
-                  <Badge variant="outline" className="px-3 py-1">
-                    {history?.length || 0} Sent
+                  <Badge variant="outline" className="px-3 py-1 bg-muted/50">
+                    {history?.length || 0} Total
                   </Badge>
                 </div>
               </CardHeader>
@@ -175,40 +201,37 @@ export default function Home() {
                   {isLoadingHistory ? (
                     <div className="flex flex-col items-center justify-center h-48 text-muted-foreground space-y-3">
                       <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                      <p>Loading history...</p>
+                      <p>Fetching history...</p>
                     </div>
                   ) : history && history.length > 0 ? (
                     <div className="divide-y divide-border/50">
                       {history.map((log) => (
                         <div 
                           key={log.id} 
-                          className="p-4 hover:bg-muted/30 transition-colors duration-200 group"
+                          className="p-5 hover:bg-muted/30 transition-colors duration-200"
                         >
                           <div className="flex items-start justify-between gap-3 mb-1">
-                            <div className="font-medium text-sm text-foreground truncate max-w-[200px] sm:max-w-xs">
+                            <div className="font-semibold text-sm text-foreground truncate max-w-[200px]">
                               {log.to}
                             </div>
-                            <div className="flex items-center text-xs text-muted-foreground whitespace-nowrap">
+                            <div className="flex items-center text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
                               <Clock className="w-3 h-3 mr-1" />
                               {log.sentAt ? format(new Date(log.sentAt), "MMM d, h:mm a") : "Just now"}
                             </div>
                           </div>
                           
-                          <p className="text-sm font-semibold text-foreground/90 mb-2 truncate">
+                          <p className="text-sm font-medium text-foreground/80 mb-3 truncate">
                             {log.subject}
                           </p>
                           
-                          <div className="flex items-center justify-between mt-2">
-                            <p className="text-xs text-muted-foreground line-clamp-1 flex-1 pr-4">
-                              {log.body}
-                            </p>
+                          <div className="flex items-center justify-between">
                             <Badge 
                               variant={log.status === 'sent' ? 'default' : 'destructive'}
                               className={`
-                                text-[10px] px-2 py-0.5 h-6 font-medium border-0
+                                text-[10px] px-2 py-0.5 font-bold border-0
                                 ${log.status === 'sent' 
-                                  ? 'bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400' 
-                                  : 'bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400'
+                                  ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
+                                  : 'bg-red-500/10 text-red-600 dark:text-red-400'
                                 }
                               `}
                             >
@@ -219,6 +242,11 @@ export default function Home() {
                               )}
                               {log.status.toUpperCase()}
                             </Badge>
+                            {log.status === 'failed' && log.error && (
+                              <p className="text-[10px] text-red-500 font-medium truncate max-w-[150px]">
+                                {log.error}
+                              </p>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -229,8 +257,8 @@ export default function Home() {
                         <Mail className="w-8 h-8 opacity-50" />
                       </div>
                       <div className="space-y-1">
-                        <p className="font-medium text-foreground">No emails sent yet</p>
-                        <p className="text-sm">Use the form to send your first email.</p>
+                        <p className="font-medium text-foreground">No messages found</p>
+                        <p className="text-sm">Sent messages will appear here.</p>
                       </div>
                     </div>
                   )}

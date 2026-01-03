@@ -12,12 +12,12 @@ export async function registerRoutes(
 
   // SMTP Configuration
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp-relay.brevo.com",
+    host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || "587"),
-    secure: false, // true for 465, false for other ports
+    secure: false, 
     auth: {
-      user: process.env.SMTP_USER || "9e50d1001@smtp-brevo.com",
-      pass: process.env.SMTP_PASS || "xsmtpsib-8dfd64a23a36e83233e0ea6f7279d1744a3e7287ca2276e66b53b8074d7c3711-qkGsEuKpLTgmAPYI",
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
     },
   });
 
@@ -25,13 +25,18 @@ export async function registerRoutes(
     try {
       const input = api.email.send.input.parse(req.body);
       
+      if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        return res.status(500).json({ message: "SMTP configuration is missing in environment variables" });
+      }
+
       try {
+        const isHtml = input.body.trim().startsWith('<') && input.body.trim().endsWith('>');
         const info = await transporter.sendMail({
-          from: `"Support" <${process.env.SMTP_EMAIL || 'support@lastanime.in'}>`, // sender address
-          to: input.to, // list of receivers
-          subject: input.subject, // Subject line
-          text: input.body, // plain text body
-          html: `<p>${input.body.replace(/\n/g, '<br>')}</p>`, // html body
+          from: `"lastanime Support" <${process.env.SMTP_EMAIL || 'support@lastanime.in'}>`, 
+          to: input.to, 
+          subject: input.subject, 
+          text: input.body, 
+          html: isHtml ? input.body : input.body.replace(/\n/g, '<br>'), 
         });
 
         console.log("Message sent: %s", info.messageId);
