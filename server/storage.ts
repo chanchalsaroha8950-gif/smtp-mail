@@ -1,25 +1,35 @@
-import { db } from "./db";
 import {
   emailLogs,
   type InsertEmailLog,
   type EmailLog
 } from "@shared/schema";
-import { desc } from "drizzle-orm";
 
 export interface IStorage {
   logEmail(log: InsertEmailLog): Promise<EmailLog>;
   getEmailLogs(): Promise<EmailLog[]>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class MemStorage implements IStorage {
+  private logs: Map<number, EmailLog>;
+  private currentId: number;
+
+  constructor() {
+    this.logs = new Map();
+    this.currentId = 1;
+  }
+
   async logEmail(log: InsertEmailLog): Promise<EmailLog> {
-    const [entry] = await db.insert(emailLogs).values(log).returning();
+    const id = this.currentId++;
+    const entry: EmailLog = { ...log, id };
+    this.logs.set(id, entry);
     return entry;
   }
 
   async getEmailLogs(): Promise<EmailLog[]> {
-    return await db.select().from(emailLogs).orderBy(desc(emailLogs.sentAt));
+    return Array.from(this.logs.values()).sort((a, b) => 
+      new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()
+    );
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();
