@@ -50,6 +50,7 @@ async function buildAll() {
     entryPoints: ["server/index.ts"],
     platform: "node",
     bundle: true,
+    packages: "external",
     format: "esm",
     outfile: "dist/index.js",
     define: {
